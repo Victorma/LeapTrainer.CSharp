@@ -10,13 +10,14 @@ using System.IO;
 using System.Collections.Generic;
 using Leap;
 
+
 /** The states of the record-playback machine. */
 public enum RecorderState
 {
     Stopped = 0,
-    Paused = 1,
-    Recording = 2,
-    Playing = 3
+    Recording = 1,
+    Playing = 2,
+    Paused = 3
 }
 
 /**
@@ -30,9 +31,9 @@ public class LeapRecorder
     /** Whether to lop back to the beginning when the last recorded frame is played.*/
     public bool loop = true;
     /** The current play state. */
-    public RecorderState state = RecorderState.Playing;
+    public RecorderState state = RecorderState.Paused;
 
-    protected List<byte[]> frames_;
+    protected List<string> frames_;
     protected float frame_index_;
     protected Frame current_frame_ = new Frame();
 
@@ -64,13 +65,15 @@ public class LeapRecorder
     /** Sets the play state to recording. */
     public void Record()
     {
+        Debug.Log("Recording");
         state = RecorderState.Recording;
+        Debug.Log(state);
     }
 
     /** Discards any recorded frames. */
     public void Reset()
     {
-        frames_ = new List<byte[]>();
+        frames_ = new List<string>();
         frame_index_ = 0;
     }
 
@@ -111,8 +114,8 @@ public class LeapRecorder
 
     /** Serializes a Leap Frame object and adds it to the end of the recording. */
     public void AddFrame(Frame frame)
-    {
-        frames_.Add(frame.Serialize);
+    { 
+        frames_.Add(JsonUtility.ToJson(frame));
     }
 
     /** Returns the current frame without advancing the playhead. This frame could be invalid. */
@@ -137,7 +140,8 @@ public class LeapRecorder
             }
             if (frame_index_ < frames_.Count && frame_index_ >= 0)
             {
-                current_frame_.Deserialize(frames_[(int)frame_index_]);
+                JsonUtility.FromJsonOverwrite(frames_[(int)frame_index_], current_frame_);
+                
                 frame_index_ += speed;
             }
         }
@@ -150,8 +154,10 @@ public class LeapRecorder
         List<Frame> frames = new List<Frame>();
         for (int i = 0; i < frames_.Count; ++i)
         {
-            Frame frame = new Frame();
-            frame.Deserialize(frames_[i]);
+            Frame frame = JsonUtility.FromJson<Frame>(frames_[i]);
+
+            
+
             frames.Add(frame);
         }
         return frames;
@@ -175,45 +181,26 @@ public class LeapRecorder
     /** Saves the recorded frames to a file, overwriting an existing file. */
     public string SaveToNewFile(string path)
     {
+        if (path.Equals(""))
+            return SaveToNewFile();
         if (File.Exists(@path))
         {
             File.Delete(@path);
         }
 
-        FileStream stream = new FileStream(path, FileMode.Append, FileAccess.Write);
-        for (int i = 0; i < frames_.Count; ++i)
-        {
-            byte[] frame_size = new byte[4];
-            frame_size = System.BitConverter.GetBytes(frames_[i].Length);
-            stream.Write(frame_size, 0, frame_size.Length);
-            stream.Write(frames_[i], 0, frames_[i].Length);
-        }
+        File.WriteAllLines(path, frames_.ToArray());
 
-        stream.Close();
+
+       
         return path;
     }
 
     /** Loads saved frames from a file. */
-    public void Load(TextAsset text_asset)
+    public void Load(string path)
     {
-        Load(text_asset.bytes);
+        frames_ = new List<string>(File.ReadAllLines(path));
+
     }
 
-    /** Loads saved frames from byte array. */
-    public void Load(byte[] data)
-    {
-        frame_index_ = 0;
-        frames_.Clear();
-        int i = 0;
-        while (i < data.Length)
-        {
-            byte[] frame_size = new byte[4];
-            Array.Copy(data, i, frame_size, 0, frame_size.Length);
-            i += frame_size.Length;
-            byte[] frame = new byte[System.BitConverter.ToUInt32(frame_size, 0)];
-            Array.Copy(data, i, frame, 0, frame.Length);
-            i += frame.Length;
-            frames_.Add(frame);
-        }
-    }
+
 }
