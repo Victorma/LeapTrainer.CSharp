@@ -91,6 +91,15 @@ public class LeapTrainer : MonoBehaviour
 	 * 
 	 * @param options
 	 */
+     void Awake()
+    {
+
+        /*
+		 * The current DEFAULT recognition algorithm is geometric template matching - which is initialized here.
+		 */
+        this.templateMatcher = new GeometricalMatcher();
+    }
+
     void Start()
     {
 
@@ -99,10 +108,6 @@ public class LeapTrainer : MonoBehaviour
 		 */
         //if (options) { for (var optionName in options) { if (options.hasOwnProperty(optionName)) { this[optionName] = options[optionName]; };};}
 
-        /*
-		 * The current DEFAULT recognition algorithm is geometric template matching - which is initialized here.
-		 */
-        this.templateMatcher = new GeometricalMatcher();
 
         /*
 		 * Getting Leap.Controller reference from the hand controller.
