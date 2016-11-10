@@ -91,6 +91,15 @@ public class LeapTrainer : MonoBehaviour
 	 * 
 	 * @param options
 	 */
+     void Awake()
+    {
+
+        /*
+		 * The current DEFAULT recognition algorithm is geometric template matching - which is initialized here.
+		 */
+        this.templateMatcher = new GeometricalMatcher();
+    }
+
     void Start()
     {
 
@@ -99,10 +108,6 @@ public class LeapTrainer : MonoBehaviour
 		 */
         //if (options) { for (var optionName in options) { if (options.hasOwnProperty(optionName)) { this[optionName] = options[optionName]; };};}
 
-        /*
-		 * The current DEFAULT recognition algorithm is geometric template matching - which is initialized here.
-		 */
-        this.templateMatcher = new GeometricalMatcher();
 
         /*
 		 * Getting Leap.Controller reference from the hand controller.
@@ -361,6 +366,20 @@ public class LeapTrainer : MonoBehaviour
         return false;
     }
 
+
+    /**
+     * Frame discardation 
+     */
+    private bool IsGoodFrame(Frame frame)
+    {
+        return frame.Hands.TrueForAll(h => IsGoodVector(h.StabilizedPalmPosition) && h.Fingers.TrueForAll(f => IsGoodVector(f.StabilizedTipPosition)));
+    }
+
+    private bool IsGoodVector(Leap.Vector v)
+    {
+        return !float.IsInfinity(Point.Distance(new Point(), new Point(v.x, v.y, v.z, 0)));
+    }
+
     /**
 	 * This function is called for each frame during gesture recording, and it is responsible for adding values in frames using the provided 
 	 * recordVector and recordValue functions (which accept a 3-value numeric array and a single numeric value respectively).
@@ -374,6 +393,11 @@ public class LeapTrainer : MonoBehaviour
 	 */
     private void recordFrame(Frame frame, Frame lastFrame)
     {
+        if (!IsGoodFrame(frame))
+        {
+            //Debug.Log("Frame discarded...");
+            return;
+        }
 
         foreach (var hand in frame.Hands)
         {
@@ -844,8 +868,9 @@ public class LeapTrainer : MonoBehaviour
         }
         // Values: 3-6 are accepted
         // Values above 6 are rejected		
-
-        return (!foundMatch) ? 0f : Mathf.Max(3f - Mathf.Max(nearest - 3f, 0f), 0f) / 3f;
+        //Debug.Log(nearest);
+        return (!foundMatch) ? 0f : (Mathf.Min(Mathf.Max(100f * Mathf.Max(nearest - 4f) / -4f, 0f), 100f) / 100f);
+        //return (!foundMatch) ? 0f : Mathf.Max(3f - Mathf.Max(nearest - 3f, 0f), 0f) / 3f;
     }
 
     /**

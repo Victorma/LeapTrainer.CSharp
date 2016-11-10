@@ -66,32 +66,35 @@ public class GeometricalMatcher : TemplateMatcher {
 			
 		var p1l = gesture1.Count;
 		
-		var matched = new List<bool>(p1l);
+		var matched = new List<bool>();
+        for (int v = 0; v < p1l; v++) matched.Add(false);
 		int i = start, index;
 		float sum = 0, min, d;
 		
 		do {
 			
 			index = -1;
-			min = float.NegativeInfinity;
+			min = float.PositiveInfinity;
 			
 			for (var j = 0; j < p1l; j++) {
 				
 				if (!matched[j]) {
 					
-					//if (gesture1[i] == null || gesture2[j] == null) { continue; }
+					if (i >= gesture1.Count || j >= gesture2.Count) { continue; }
 					
 					d = Point.Distance(gesture1[i], gesture2[j]);
 					
 					if (d < min) { min = d; index = j; }
 				}
 			}
-			
-			matched[index] = true;
-			
-			sum += (1 - ((i - start + p1l) % p1l) / p1l) * min;
-			
-			i = (i + 1) % p1l;
+
+            if(index != -1)
+            {
+                matched[index] = true;
+                sum += (1 - ((i - start + p1l) % p1l) / p1l) * min;
+            }
+
+            i = (i + 1) % p1l;
 			
 		} while (i != start);
 		
@@ -283,6 +286,7 @@ public class GeometricalMatcher : TemplateMatcher {
 	float pathLength (List<Point> gesture) {
 			
 		float d = 0.0f;
+        float distance;
 		Point g, gg;
 		
 		for (int i = 1, l = gesture.Count; i < l; i++) {
@@ -290,7 +294,18 @@ public class GeometricalMatcher : TemplateMatcher {
 			g	= gesture[i];
 			gg 	= gesture[i - 1];
 			
-			if (g.stroke == gg.stroke) { d += Point.Distance(gg, g); }
+			if (g.stroke == gg.stroke) {
+                d += Point.Distance(gg, g);
+                /*
+                distance = Point.Distance(gg, g);
+                if (distance < 100000)
+                    d += distance;
+                else
+                {
+                    gesture.RemoveAt(i);
+                    i--;
+                }*/
+            }
 		}
 		
 		return d;
