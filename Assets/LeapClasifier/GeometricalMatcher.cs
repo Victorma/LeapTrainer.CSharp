@@ -74,25 +74,27 @@ public class GeometricalMatcher : TemplateMatcher {
 		do {
 			
 			index = -1;
-			min = float.NegativeInfinity;
+			min = float.PositiveInfinity;
 			
 			for (var j = 0; j < p1l; j++) {
 				
 				if (!matched[j]) {
 					
-					if (gesture1.Count >= i || gesture2.Count >= j) { continue; }
+					if (i >= gesture1.Count || j >= gesture2.Count) { continue; }
 					
 					d = Point.Distance(gesture1[i], gesture2[j]);
 					
 					if (d < min) { min = d; index = j; }
 				}
 			}
-			
-			matched[index] = true;
-			
-			sum += (1 - ((i - start + p1l) % p1l) / p1l) * min;
-			
-			i = (i + 1) % p1l;
+
+            if(index != -1)
+            {
+                matched[index] = true;
+                sum += (1 - ((i - start + p1l) % p1l) / p1l) * min;
+            }
+
+            i = (i + 1) % p1l;
 			
 		} while (i != start);
 		

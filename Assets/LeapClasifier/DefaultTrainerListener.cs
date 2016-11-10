@@ -48,7 +48,7 @@ public class DefaultTrainerListener : MonoBehaviour {
 
     private void Trainer_OnGestureRecognized(string name, float value, Dictionary<string, float> allHits)
     {
-        Debug.Log("Gesture " + name + " recognized");
+        Debug.Log("Gesture " + name + " recognized: " + value);
     }
 
     private void Trainer_OnGestureUnknown(Dictionary<string, float> allHits)
